@@ -2,15 +2,7 @@ require 'selenium-webdriver'
 require 'highline'
 require 'yaml'
 
-module ElementExtensions
-  def set_text(text)
-    clear
-    send_keys(text)
-  end
-end
-class ::Selenium::WebDriver::Element
-  prepend ElementExtensions
-end
+require_relative 'common'
 
 # Helper to answer security questions.
 # Stores answers in a local file after the first time.
