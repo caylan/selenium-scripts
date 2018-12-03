@@ -29,6 +29,10 @@ end
 log_file = File.open(File.join(TMP_DIR, 'logs.txt'), 'a') # create or append
 logger = Logger.new log_file
 
+cookies = IO.foreach(File.join(TMP_DIR, 'cookies.txt')).map do |line|
+  JSON.parse line
+end
+
 cli = HighLine.new
 
 username = cli.ask('Enter username: ') { |q| q.default = 'caylan' }
@@ -40,10 +44,15 @@ claims = Claims.new(claims_location).claims
 driver = Selenium::WebDriver.for :chrome
 wait = Selenium::WebDriver::Wait.new(timeout: 120) # seconds
 
-# Login
+# Set cookies and refresh
 driver.navigate.to 'https://secure.connectyourcare.com/portal/CC'
+cookies.each do |cookie|
+  driver.manage.add_cookie(name: cookie['name'], value: cookie['value'])
+end
+driver.navigate.refresh
+
+# Login
 driver.find_element(id: 'usernameId').set_text(username)
-driver.find_element(id: 'submit').click
 driver.find_element(id: 'password').set_text(password)
 driver.find_element(id: 'submit').click
 
@@ -67,7 +76,7 @@ claims.each do |claim|
   driver.find_element(name: '_eventId_next').click
 
   # Confirm details
-  unless cli.agree('Continue?', character = true)
+  unless cli.agree('Continue? (y/n)', character = true)
     driver.quit
     exit
   end
